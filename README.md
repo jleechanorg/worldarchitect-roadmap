@@ -9,6 +9,14 @@ This repo collects periodic audits of:
 - Human-decision backlog (top 5 + lower-pri deferred via Codex/cmux consultant)
 - Auto-action proposals (gated on single-word triggers)
 
+Engineering plans for the main [worldarchitect.ai](https://github.com/jleechanorg/worldarchitect.ai) codebase live here as dated markdown at the repo root (same naming pattern as reports: `YYYY-MM-DD-HHMM-slug.md` (e.g. `2026-06-27-0952-roadmap-report.md`)).
+
+## Engineering plans
+
+| Date (UTC) | Title | Code repo tracking |
+|------------|-------|-------------------|
+| 2026-10-12 01:35 | [world_logic.py modularization (10-module split)](2026-10-12-0135-world-logic-modularization-plan.md) | [worldarchitect.ai PR #10433](https://github.com/jleechanorg/worldarchitect.ai/pull/10433) (superseded layout — implementation PRs P1–P10) |
+
 ## Reports
 
 | Date (UTC) | Title | Source thread |
