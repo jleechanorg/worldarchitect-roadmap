@@ -15,7 +15,7 @@ Engineering plans for the main [worldarchitect.ai](https://github.com/jleechanor
 
 | Date (UTC) | Title | Code repo tracking |
 |------------|-------|-------------------|
-| 2026-10-12 01:35 | [world_logic.py modularization (10-module split)](2026-10-12-0135-world-logic-modularization-plan.md) | [worldarchitect.ai PR #10433](https://github.com/jleechanorg/worldarchitect.ai/pull/10433) (superseded layout — implementation PRs P1–P10) |
+| 2026-10-12 01:35 | [world_logic.py modularization (staged facade-first plan)](2026-10-12-0135-world-logic-modularization-plan.md) | [worldarchitect.ai PR #10433](https://github.com/jleechanorg/worldarchitect.ai/pull/10433) (prior draft — implementation milestones P1–P10; docs-only authorization) |
 
 ## Reports
 
