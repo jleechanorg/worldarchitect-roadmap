@@ -1,12 +1,12 @@
 # world_logic.py modularization plan
 
 **Status:** Revised (roadmap home — implementation PRs land in [jleechanorg/worldarchitect.ai](https://github.com/jleechanorg/worldarchitect.ai))  
-**Supersedes:** design-only draft [worldarchitect.ai PR #10433](https://github.com/jleechanorg/worldarchitect.ai/pull/10433) (14-module layout); close or retarget that PR to link here after merge.  
-**Measured baseline:** `wc -l mvp_site/world_logic.py` → **12,966** lines (2026-10-12, `origin/main`)  
+**Supersedes:** design-only draft [worldarchitect.ai PR #10433](https://github.com/jleechanorg/worldarchitect.ai/pull/10433) (14-module layout; **closed** — points here).  
+**Measured baseline:** `wc -l mvp_site/world_logic.py` → **12,966** lines @ `origin/main` **`1dd545dd6`** (2026-10-12)  
 **Related beads / prior art:** design-retro Finding 01 (`docs/plans/design-retro-2026-06/01-core-module-god-function-accretion-blocks-testability-and-co.md`), bead rev-0yt8m (long-term ≤4000 target), Gate 6 in `.github/workflows/design-doc-gate.yml`  
 **CI context:** Gate 6 ratchet raised to **14,000** in PR #10428 to unblock merges while this plan executes.
 
-**Roadmap revision note:** Re-validation used the same `origin/main` baseline as the #10433 draft (symbol sizes, cluster boundaries, MCP map). Executors should re-run `wc -l`, `grep -E '^def |^async def |^class ' mvp_site/world_logic.py`, and import-graph spot checks on the branch they extract from before each move-only PR.
+**Roadmap revision note:** §3.1 records AST-verified function LOC on `1dd545dd6`. Executors should re-run `wc -l`, `grep -E '^def |^async def |^class ' mvp_site/world_logic.py`, and import-graph spot checks on the branch they extract from before each move-only PR.
 
 ---
 
@@ -66,15 +66,46 @@ The [#10433 draft](https://github.com/jleechanorg/worldarchitect.ai/pull/10433) 
 
 | Draft module | Issue | Recommendation |
 |--------------|-------|----------------|
-| `world_logic_world_events.py` (~700) | Living-world and scene normalization overlap rewards-box synthesis **and** `inject_persisted_living_world_fallback` (~265 LOC) in the persist cluster; three modules would ping-pong the same envelopes. | **Merge into** `world_logic_rewards_and_events.py` with the rewards cluster (lines 221–2270 plus world-event helpers that today sit adjacent to rewards / story projection). Keep **persist-time** living-world fallback in turn persist. |
-| `world_logic_modal_choices.py` (~900) | Modal finish injection, stale choice repair, and CC/level-up modal lock share freeze-time state and `level_up_session`; splitting produced mutual private imports in the draft graph. | **Merge into** `world_logic_progression.py` with level-up invariants and modal lock (~3,100 LOC). |
-| `world_logic_god_mode.py` (~450) | God-mode directive merge is only invoked from the turn pipeline (`process_action_unified` region); a separate module adds a thin layer with high coupling to turn stages and no MCP surface. | **Keep inside** `world_logic_turn_process.py` as named stage helpers until the orchestrator is ≤400 LOC (same PR series as P7). |
-| `world_logic_campaign_write.py` (~350) + `world_logic_state_commands.py` (~450) | Both are non-turn Firestore/state mutation paths (update/export/list vs SET/combat/social HP). Each alone is below a comfortable ownership threshold. | **Merge into** `world_logic_campaign_mutate.py` (~800 LOC). |
-| `world_logic_user_settings.py` (~350) | Thin but **distinct** MCP tools and `main.py` routes on user docs, not campaign docs. | **Keep separate** for stable mental model and test clustering. |
+| `world_logic_world_events.py` (~700) | Living-world and scene normalization overlap rewards-box synthesis **and** `inject_persisted_living_world_fallback` (~265 LOC) in the persist cluster; three modules would ping-pong the same envelopes. | **Merge into** `world_logic_rewards_and_events.py` (~**1,850** LOC verified). On extract, move **~400 LOC** of level-up–named helpers still in 221–2270 (e.g. `append_canonical_level_up_story_projection`) into **`progression`**. Keep **persist-time** living-world fallback in turn persist. |
+| `world_logic_modal_choices.py` (~900) | Modal finish injection, stale choice repair, and CC/level-up modal lock share freeze-time state and `level_up_session`; splitting produced mutual private imports in the draft graph. | **Merge into** `world_logic_progression.py` (~**2,950** LOC verified, band 2271–5239). `stabilize_nonlethal_allegiance_hp` stays in **streaming**. **`turn_persist`** keeps `_maybe_trigger_level_up_modal` (~163 LOC); persist→progression calls are expected. |
+| `world_logic_god_mode.py` (~450) | God-mode directive merge is only invoked from the turn pipeline; a separate module adds a thin layer with no MCP surface. God/spicy/faction helpers also sit in the **7384–8926** “create” band (~698 LOC) and **streaming** (~180 LOC spicy), not only 8927+. | **Keep inside** `world_logic_turn_process.py` (~**3,100–3,400** LOC after **call-graph relocation** in P7). **`campaign_create`** shrinks to ~**800** once god/spicy/faction leave the create band. |
+| `world_logic_campaign_write.py` (~350) + `world_logic_state_commands.py` (~450) | Both are non-turn Firestore/state mutation paths (update/export/list vs SET/combat/social HP). Each alone is below a comfortable ownership threshold. | **Merge into** `world_logic_campaign_mutate.py` (~**860** LOC verified). |
+| `world_logic_user_settings.py` (~350) | Thin but **distinct** MCP tools and `main.py` routes on user docs, not campaign docs. | **Keep separate** (~**240** LOC verified). |
 
 **Layout choice:** Use **facade + sibling modules** under `mvp_site/` (same as `quick_start_campaign.py`) through the patch-path cleanup PR. Do **not** rename to a `world_logic/` package in early PRs — that forces hundreds of test patch updates at once. An optional later PR may introduce `mvp_site/world_logic/` with `__init__.py` re-exports once siblings stabilize.
 
-**Dependency rule (avoid cycles):** leaf helpers must not import `world_logic` or `world_logic_turn_process`. Allowed direction: `turn_process → {streaming, persist, progression, rewards_and_events} → {game_state, rewards_engine, firestore_service}`.
+**Dependency rule (avoid cycles):** leaf helpers must not import `world_logic` or `world_logic_turn_process`. Allowed direction: `turn_process → {streaming, persist, progression, rewards_and_events} → {game_state, rewards_engine, firestore_service}`. **`turn_persist → progression`** (e.g. level-up modal entry) is an intentional edge, not a failed split.
+
+---
+
+## 3.1 Verified against worldarchitect.ai `origin/main` (2026-10-12)
+
+**Evidence SHA:** `1dd545dd6b3922bfc219abe9ae01732690d2c221` — `wc -l mvp_site/world_logic.py` → **12,966**.
+
+**Method:** AST line spans for all **171** top-level functions, primary assignment by §2 line bands, plus cross-module `Call` edges inside the file.
+
+| Module | Plan target | Verified function LOC | Notes |
+|--------|------------:|----------------------:|-------|
+| `world_logic_bootstrap.py` | ~220 | **220** | Lines 1–220 interstitial + early symbols |
+| `world_logic_rewards_and_events.py` | ~1,850 | **1,846** | World-event helpers already in 221–2270; on extract move level-up–named helpers (~**400** LOC) to `progression` |
+| `world_logic_progression.py` | ~2,950 | **2,948** | Band 2271–5239; `stabilize_nonlethal_allegiance_hp` stays in `streaming` |
+| `world_logic_streaming.py` | ~750 | **748** | Includes spicy inject at 5543–5977 (~180 LOC); may stay here or move with god stages in P7 (acyclic imports) |
+| `world_logic_turn_persist.py` | ~1,180 | **1,183** | Includes `_maybe_trigger_level_up_modal` (163); living-world fallback @ 6904 stays here |
+| `world_logic_campaign_create.py` | ~800 | **805** true create | **1,503** if whole 7384–8926 band kept — pull ~**698** LOC god/spicy/faction into `turn_process` in P7 |
+| `world_logic_turn_process.py` | ~3,100–3,400 | **2,638** band only / **~3,336** with god relocation | Relocate pre-8927 god/spicy/faction by **call graph**, not the 8927+ line band alone |
+| `world_logic_campaign_read.py` | ~570 | **573** | Page-load helpers 11223–11567 + `get_campaign_state_unified` |
+| `world_logic_campaign_mutate.py` | ~860 | **859** | |
+| `world_logic_user_settings.py` | ~240 | **236** | |
+
+**Intra-file call edges (sanity):** `turn_process→rewards_and_events` **28**; `turn_process→progression` **13**; `turn_persist→progression` **8**; `turn_persist→rewards_and_events` **8**; `streaming→progression` **5**; `rewards_and_events↔progression` **1** (`_reconcile_level_up_ui_pair` → `normalize_rewards_box_for_ui`).
+
+God/spicy/faction code outside the 8927+ turn band today:
+
+| Location | Approx. LOC | Examples |
+|----------|------------:|----------|
+| **7384–8926** (“create” band) | **698** | Faction headers 8107–8197, directives 8335–8658, `compute_god_and_level_up_mode` @ 8881 |
+| **5236–6099** (streaming) | **180** | `_inject_spicy_mode_choice_if_needed`, `_compute_spicy_mode_exit_settings` |
+| **221–2270** (rewards) | **18** | `_get_god_mode_response_text` |
 
 ---
 
@@ -84,19 +115,19 @@ Keep **`mvp_site/world_logic.py` as the public facade** until the final tighteni
 
 | Module | Target LOC | Moved concerns |
 |--------|------------|----------------|
-| `world_logic_bootstrap.py` | ~250 | Firebase init, lazy imports, shared constants, Dragon Knight template blobs |
-| `world_logic_rewards_and_events.py` | ~2,100 | Rewards-box builders, synthesis, postconditions, UI normalization, world-event / scene annotation helpers (draft `world_events` + rewards cluster) |
-| `world_logic_progression.py` | ~3,100 | Level-up invariants, sealing, modal lock, finish-choice injection, stale-offer scrub, story projection hooks (draft `level_up` + `modal_choices`) |
-| `world_logic_streaming.py` | ~650 | `finalize_streaming_state_before_persistence`, spicy-mode injection, pre-persist validation |
-| `world_logic_turn_persist.py` | ~1,050 | `_prepare_game_state*`, `_load_campaign_and_continue_story`, `_persist_turn_to_firestore`, `inject_persisted_living_world_fallback` |
-| `world_logic_campaign_create.py` | ~850 | `create_campaign_unified` and private prompt/debug/spicy helpers |
-| `world_logic_turn_process.py` | ~2,850 | `process_action_unified` orchestrator + stage functions + god-mode directive stages (same file until orchestrator ≤400 LOC) |
-| `world_logic_campaign_read.py` | ~650 | `get_campaign_state_unified`, page-load fetch/finalize, pagination metadata |
-| `world_logic_campaign_mutate.py` | ~800 | `update_campaign_unified`, `export_campaign_unified`, list helpers, SET/UPDATE handlers, social HP terminal sync, combat cleanup |
-| `world_logic_user_settings.py` | ~350 | Settings unified APIs, error/success response helpers |
+| `world_logic_bootstrap.py` | ~220 | Firebase init, lazy imports, shared constants, Dragon Knight template blobs |
+| `world_logic_rewards_and_events.py` | ~1,850 | Rewards-box builders, synthesis, postconditions, UI normalization, world-event / scene annotation helpers; **exclude** ~400 LOC level-up–named helpers → `progression` |
+| `world_logic_progression.py` | ~2,950 | Level-up invariants, sealing, modal lock, finish-choice injection, stale-offer scrub, level-up story projection moved from rewards band |
+| `world_logic_streaming.py` | ~750 | `finalize_streaming_state_before_persistence`, pre-persist validation; spicy inject (~180 LOC) here until/unless P7 moves it with god stages |
+| `world_logic_turn_persist.py` | ~1,180 | `_prepare_game_state*`, `_load_campaign_and_continue_story`, `_persist_turn_to_firestore`, `inject_persisted_living_world_fallback`, `_maybe_trigger_level_up_modal` |
+| `world_logic_campaign_create.py` | ~800 | `create_campaign_unified` and true create helpers only (after P7 pulls god/spicy/faction out of 7384–8926) |
+| `world_logic_turn_process.py` | ~3,100–3,400 | `process_action_unified` orchestrator + stage functions + god-mode / faction / spicy turn-path helpers relocated by call graph (8927+ band plus ~698 from create band, optional ~180 from streaming, ~18 from rewards) |
+| `world_logic_campaign_read.py` | ~570 | `get_campaign_state_unified`, page-load fetch/finalize, pagination metadata |
+| `world_logic_campaign_mutate.py` | ~860 | `update_campaign_unified`, `export_campaign_unified`, list helpers, SET/UPDATE handlers, social HP terminal sync, combat cleanup |
+| `world_logic_user_settings.py` | ~240 | Settings unified APIs (response helpers may stay shared with mutate or bootstrap) |
 | **`world_logic.py` (facade)** | **≤800** | Re-exports only: unified entrypoints + symbols tests patch today |
 
-**End state:** facade under **800 LOC**; largest sibling **`world_logic_progression.py` ~3,100** and **`world_logic_turn_process.py` ~2,850** (both under the ≤4,000 interim bead target); `process_action_unified` ≤ **400** lines delegating to named stages (load → agent → finalize → persist).
+**End state:** facade under **800 LOC**; largest sibling **`world_logic_turn_process.py` ~3,100–3,400** then **`world_logic_progression.py` ~2,950** (both under the ≤4,000 interim bead target); `process_action_unified` ≤ **400** lines delegating to named stages (load → agent → finalize → persist).
 
 ```mermaid
 flowchart TB
@@ -127,6 +158,7 @@ flowchart TB
   TAP --> TP
   TAP --> WP
   TAP --> WR
+  TP --> WP
   TS --> WR
   CR --> WR
   WP --> WR
@@ -148,15 +180,15 @@ Each PR should be **move-only** (no semantic edits), with:
 | PR | Scope | Est. LOC moved | Proof focus |
 |----|--------|----------------|-------------|
 | **P0** | This plan in **worldarchitect-roadmap** (no code moves) | 0 | N/A |
-| **P1** | Extract `world_logic_bootstrap.py` | ~250 | Import smoke + lazy loader tests |
-| **P2** | Extract `world_logic_rewards_and_events.py` (rewards + world-event helpers) | ~2,100 | `test_rewards_*`, canonicalize invariants, design-doc Gate 1/3 |
-| **P3** | Extract `world_logic_campaign_read.py` (page load) | ~650 | Pagination / page-load tests |
-| **P4** | Extract `world_logic_progression.py` (level-up + modal) | ~3,100 | Level-up modal, freeze-time, CC lock tests |
-| **P5** | Extract `world_logic_streaming.py` + `world_logic_turn_persist.py` | ~1,700 | Streaming orchestrator, finalize_streaming, persist tests |
-| **P6** | Move `create_campaign_unified` → `world_logic_campaign_create.py` | ~850 | Campaign creation / quick-start integration |
-| **P7** | Move `process_action_unified` + god-mode stages → `world_logic_turn_process.py`; leave thin orchestrator re-export in facade | ~2,850 | Broad `test_world_logic.py` + MCP smoke |
-| **P8** | Extract `world_logic_campaign_mutate.py` | ~800 | MCP update/export/list + SET/combat tests |
-| **P9** | Extract `world_logic_user_settings.py` | ~350 | Settings routes + MCP tool map |
+| **P1** | Extract `world_logic_bootstrap.py` | ~220 | Import smoke + lazy loader tests |
+| **P2** | Extract `world_logic_rewards_and_events.py`; move ~400 LOC level-up–named helpers from 221–2270 into facade shim → **`progression` in P4** | ~1,850 | `test_rewards_*`, canonicalize invariants, design-doc Gate 1/3 |
+| **P3** | Extract `world_logic_campaign_read.py` (page load) | ~570 | Pagination / page-load tests |
+| **P4** | Extract `world_logic_progression.py` (level-up + modal + level-up helpers from rewards band) | ~2,950 | Level-up modal, freeze-time, CC lock tests |
+| **P5** | Extract `world_logic_streaming.py` + `world_logic_turn_persist.py` | **~1,930** verified (748 + 1,183) | Streaming orchestrator, finalize_streaming, persist tests; **`turn_persist→progression`** imports expected |
+| **P6** | Move true create path → `world_logic_campaign_create.py` (**~805** LOC; whole 7384–8926 band ~1,503 until P7) | ~805–1,503 | Campaign creation / quick-start integration |
+| **P7** | Move `process_action_unified` (8927+ band ~2,638 LOC) **plus** god/spicy/faction helpers from create band (~698), streaming spicy (~180), rewards god text (~18) → `world_logic_turn_process.py` by **call graph**; shrink `campaign_create` to ~800; thin orchestrator re-export in facade | **~3,100–3,400** | Broad `test_world_logic.py` + MCP smoke; decide spicy inject home (streaming vs turn_process) with acyclic imports |
+| **P8** | Extract `world_logic_campaign_mutate.py` | ~860 | MCP update/export/list + SET/combat tests |
+| **P9** | Extract `world_logic_user_settings.py` | ~240 | Settings routes + MCP tool map |
 | **P10** | Delete re-export shims where safe; bulk-update `@patch` paths; tighten Gate 6 toward 4k facade goal | varies | Full scoped world_logic suite + MCP e2e |
 
 **Ordering rationale:** start with **low fan-in** helpers (bootstrap, rewards/events) to prove the re-export pattern; land **progression** before streaming/persist so finalize paths call stable modules; defer **`process_action_unified`** until dependencies live in siblings; keep **user settings** near the end because it is loosely coupled. Design-doc gates that grep **`mvp_site/world_logic.py`** literally (Gates 1, 1b, 3) stay on the facade file until gate definitions move in a dedicated CI PR.
@@ -200,7 +232,7 @@ Each PR should be **move-only** (no semantic edits), with:
 |--------|-------|---------------------|
 | `world_logic.py` LOC | 12,966 | ≤800 (facade) |
 | `process_action_unified` LOC | 2,294 | ≤400 orchestrator |
-| Largest module LOC | 12,966 | ≤3,100 (`progression`) |
+| Largest module LOC | 12,966 | ≤3,400 (`turn_process`) |
 | Test patch churn per extraction PR | — | 0 failing tests; ≤10 patch path updates until P10 |
 
 ---
