@@ -9,6 +9,14 @@ This repo collects periodic audits of:
 - Human-decision backlog (top 5 + lower-pri deferred via Codex/cmux consultant)
 - Auto-action proposals (gated on single-word triggers)
 
+Engineering plans for the main [worldarchitect.ai](https://github.com/jleechanorg/worldarchitect.ai) codebase live here as dated markdown at the repo root (same naming pattern as reports: `YYYY-MM-DD-HHMM-slug.md` (e.g. `2026-06-27-0952-roadmap-report.md`)).
+
+## Engineering plans
+
+| Date (UTC) | Title | Code repo tracking |
+|------------|-------|-------------------|
+| 2026-10-19 03:24 | [In-scene illustrations (PR #10564)](2026-10-18-2024-in-scene-illustration-design.md) | [worldarchitect.ai PR #10564](https://github.com/jleechanorg/worldarchitect.ai/pull/10564); follow-ups [#10608](https://github.com/jleechanorg/worldarchitect.ai/issues/10608), [worldai_frontend #120](https://github.com/jleechanorg/worldai_frontend/pull/120) |
+
 ## Reports
 
 | Date (UTC) | Title | Source thread |
