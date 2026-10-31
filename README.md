@@ -19,3 +19,5 @@ This repo collects periodic audits of:
 
 - 4h `cmux-surface-report-4h` cron
 - Manual deep-audit on user request (as in this report)
+
+- [2026-10-31 activity](activity/2026-10-31.md): NPC portraits stack handoff ([doc](2026-10-31-npc-portraits-stack-handoff.md))

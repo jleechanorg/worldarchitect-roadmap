@@ -2,14 +2,22 @@
 
 Grok Scenes has paused coding at Jeffrey's request. Read this first, then the detailed doc copied below (from `roadmap/npc-portraits-stack-status.md` on #10953's branch).
 
-## Current state (live from GitHub, 2026-10-31 ~12:05 PM PT)
-| PR | Branch | Head | Draft | Label |
-|---|---|---|---|---|
-| #10970 S1 present_characters schema | feat/npc-portraits-10608-s1-schema-presence | ded86788 | no | stage:5-final-approval |
-| #10971 S2 portrait backend | feat/npc-portraits-10608-s2-portrait-backend | c8797360 | no | stage:5-final-approval |
-| #10972 S3 scene reference faces | feat/npc-portraits-10608-s3-scene-references | d5d27344 | no | stage:5-final-approval |
-| #10613 S4 portrait strip UI | feat/npc-portraits-10608 | 43d1738c | yes | stage:3-evidence-review |
-| #10953 NPC auto-portraits | feat/npc-auto-portraits-all-present | 23756564 | no | stage:3-evidence-review |
+## Current state (live from GitHub, 2026-10-31 12:30 PM PT, /nextsteps refresh)
+Line counts: non-prod means tests, testing_*, docs, roadmap, *.md and *.json; prod is everything else.
+| PR | What | Head | Prod | Non-prod | Draft | Label | Mergeable |
+|---|---|---|---|---|---|---|---|
+| #10970 | S1 present_characters schema | ded86788 | +333/-22 | +8766/-2878 | no | stage:5-final-approval | UNKNOWN |
+| #10971 | S2 portrait backend | c8797360 | +1882/-30 | +2482/-31 | no | stage:5-final-approval | UNKNOWN |
+| #10972 | S3 scene reference faces | d5d27344 | +1000/-37 | +1650/-28 | no | stage:5-final-approval | UNKNOWN |
+| #10613 | S4 portrait strip UI | 43d1738c | +3749/-80 | +14153/-2919 | yes | stage:3-evidence-review | CONFLICTING |
+| #10953 | NPC auto-portraits | 23756564 | +243/-48 | +5088/-5293 | no | stage:3-evidence-review | MERGEABLE |
+| jleechan-skills #624 | /static-review skill | ab22bc9e | +2/-0 | +277/-30 | no | CHANGES_REQUESTED (CodeRabbit) | open |
+
+Warning: #10613's delta jumped from +544/-1 prod to +3749/-80, and it now conflicts. Its 43d1738c head came from another agent, which probably merged main or the lower slices into it. Check the base before reviewing.
+No required check shows FAILURE at these heads, but mergeability is still computing for S1 to S3.
+
+## Who pushed what
+The #10970 commits fde181f6, c712301f and aac4465d (2026-10-30, 2:08 to 2:13 PM PT) are Grok Scenes' fix pass: names are now truncated instead of dropped, the WORLD_SIM_SETUP pin is restored, and AGY present_characters is asserted. Everything later came from other agents.
 
 ## Important: other agents pushed after Grok Scenes' last action
 Since 2026-10-30 ~2 PM PT, other coders (commit prefixes "gemini/gemini-3.8-flash", "[gemini][gemini-3-flash]", "gemini-3.7-flash") pushed merges of main and fixes to #10970, #10971, and #10953 (and #10613 moved to 43d1738c). Those pushes also undrafted the PRs and moved them to stage 5. Grok Scenes did not make those stage/undraft changes and has NOT verified them. Per standing rules, a resumer must re-verify every gate at the current heads before merging.
@@ -18,7 +26,7 @@ Since 2026-10-30 ~2 PM PT, other coders (commit prefixes "gemini/gemini-3.8-flas
 - #10970 @86ce9fe3: two cold /static-review seats NOT APPROVED. P1s: stale prompt_tool_contracts.json hash, conflict with main, evidence bound to 8b71a6ba, missing BQ-logged live rows, AGY waiver needed a recorded source (Jeffrey 2026-10-29: "Use gemini api"). Some of these appear addressed by later commits fde181f6/c712301f/aac4465d/ded86788 (author unverified).
 - /er: #10970 PASS; #10971/#10972/#10613 PARTIAL (no visual review, evidence from the stack-top preview); #10953 PARTIAL (no auto-portrait proof; jleechantest lacks admin claim).
 - Preview evidence gist: https://gist.github.com/jleechan2015/828e46c70eef07b99ca24f8d2ccdfcf6 (manual portraits, scene 6 reference faces + composite, scenes 7-9 cadence).
-- New, NOT yet uploaded: /workspace/evidence/s10run4/ (build 5b4db48b, scenes 10-11, typing + Send + image appear; mpdecimate 1100/1582 unique). Passes the ui-video-evidence frame rule.
+- Uploaded to gist 828e46c7 (commit abfcaff) as run4_*: /workspace/evidence/s10run4/ (build 5b4db48b, scenes 10-11, typing + Send + image appear; mpdecimate 1100/1582 unique). Passes the ui-video-evidence frame rule.
 - The /static-review skill exists only on jleechan-skills #624's branch (ab22bc9); #624 is unmerged.
 
 ## Test override still active (revert when done)
